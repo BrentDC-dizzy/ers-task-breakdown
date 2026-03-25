@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ERS — Backend Task Breakdown</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e14;
+    --surface: #12151f;
+    --surface-2: #181c28;
+    --border: #1f2535;
+    --border-soft: #252b3b;
+    --text: #e2e6f0;
+    --text-muted: #6b7594;
+    --text-dim: #3d4560;
+    --accent: #4f7cff;
+    --accent-glow: rgba(79, 124, 255, 0.15);
+    --accent-soft: rgba(79, 124, 255, 0.08);
+    
+    /* Dev Assignments Colors */
+    --dev-a: #ff7b72;
+    --dev-a-bg: rgba(255, 123, 114, 0.1);
+    --dev-b: #79c0ff;
+    --dev-b-bg: rgba(121, 192, 255, 0.1);
+    --dev-c: #d2a8ff;
+    --dev-c-bg: rgba(210, 168, 255, 0.1);
+
+    --hold: #f5a623;
+    --hold-glow: rgba(245, 166, 35, 0.12);
+    --hold-soft: rgba(245, 166, 35, 0.07);
+    --future: #22d3c5;
+    --future-soft: rgba(34, 211, 197, 0.07);
+    --tag-bg: #1a1f30;
+    --sidebar-w: 260px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Instrument Sans', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ─── SIDEBAR ─────────────────────────────── */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 100;
+    transition: transform 0.3s ease;
+  }
+
+  #sidebar::-webkit-scrollbar { width: 4px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sidebar-header {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .sidebar-logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .sidebar-logo span { color: var(--accent); }
+
+  .sidebar-sub {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-section {
+    padding: 16px 12px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  .sidebar-section:not(:first-of-type) {
+    margin-top: 8px;
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 12px;
+    margin: 1px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    text-decoration: none;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  .nav-item:hover { background: var(--surface-2); color: var(--text); }
+  .nav-item.active { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(79,124,255,0.15); }
+  .nav-item.hold { color: var(--hold); opacity: 0.7; }
+  .nav-item.hold:hover { opacity: 1; background: var(--hold-soft); }
+  .nav-item.future { color: var(--future); opacity: 0.7; }
+  .nav-item.future:hover { opacity: 1; background: var(--future-soft); }
+
+  .nav-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    color: var(--text-dim);
+    min-width: 20px;
+  }
+
+  .nav-item.active .nav-num { color: var(--accent); opacity: 0.7; }
+  .nav-badge {
+    margin-left: auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 8px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+  }
+  .badge-hold { background: var(--hold-glow); color: var(--hold); border: 1px solid rgba(245,166,35,0.2); }
+  .badge-future { background: var(--future-soft); color: var(--future); border: 1px solid rgba(34,211,197,0.2); }
+
+  /* ─── MAIN ────────────────────────────────── */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    padding: 0;
+    max-width: calc(100vw - var(--sidebar-w));
+  }
+
+  .page-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 48px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(8px);
+  }
+
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 26px;
+    letter-spacing: -0.8px;
+    color: var(--text);
+  }
+  .page-title span { color: var(--accent); }
+
+  .page-meta {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+
+  .meta-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .meta-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot-a { background: var(--dev-a); box-shadow: 0 0 6px var(--dev-a); }
+  .dot-b { background: var(--dev-b); box-shadow: 0 0 6px var(--dev-b); }
+  .dot-c { background: var(--dev-c); box-shadow: 0 0 6px var(--dev-c); }
+  .dot-hold { background: var(--hold); }
+
+  /* ─── CONTENT ─────────────────────────────── */
+  .content { padding: 48px; }
+
+  /* ─── SUMMARY TABLE ───────────────────────── */
+  #overview { margin-bottom: 56px; }
+
+  .section-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .overview-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .overview-table th {
+    background: var(--surface-2);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .overview-table td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    vertical-align: middle;
+  }
+
+  .overview-table tr:last-child td { border-bottom: none; }
+  .overview-table tr { cursor: pointer; transition: background 0.12s; }
+  .overview-table tr:hover td { background: var(--surface-2); }
+
+  .overview-table td:first-child { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-dim); width: 40px; }
+  .overview-table td:nth-child(2) { font-weight: 500; color: var(--text); }
+  .overview-table td:nth-child(3) { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-muted); }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    flex-shrink: 0;
+  }
+
+  .sp-dev-a { background: var(--dev-a-bg); color: var(--dev-a); border: 1px solid rgba(255, 123, 114, 0.2); }
+  .sp-dev-b { background: var(--dev-b-bg); color: var(--dev-b); border: 1px solid rgba(121, 192, 255, 0.2); }
+  .sp-dev-c { background: var(--dev-c-bg); color: var(--dev-c); border: 1px solid rgba(210, 168, 255, 0.2); }
+  .sp-hold { background: var(--hold-soft); color: var(--hold); border: 1px solid rgba(245,166,35,0.2); }
+  .sp-future { background: var(--future-soft); color: var(--future); border: 1px solid rgba(34,211,197,0.2); }
+
+  /* ─── PART CARDS ──────────────────────────── */
+  .parts-grid { display: flex; flex-direction: column; gap: 24px; }
+  .part-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+    scroll-margin-top: 100px;
+  }
+  .part-card:hover { border-color: var(--border-soft); }
+
+  .part-card.is-hold {
+    border-color: rgba(245,166,35,0.15);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(245,166,35,0.03) 100%);
+  }
+
+  .part-card.is-future {
+    border-color: rgba(34,211,197,0.15);
+    background: linear-gradient(135deg, var(--surface) 0%, rgba(34,211,197,0.03) 100%);
+  }
+
+  .card-header {
+    padding: 20px 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .is-hold .card-header { border-bottom-color: rgba(245,166,35,0.1); }
+  .is-future .card-header { border-bottom-color: rgba(34,211,197,0.1); }
+
+  .part-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    padding: 4px 8px;
+    border-radius: 5px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .is-hold .part-num { color: var(--hold); border-color: rgba(245,166,35,0.2); background: var(--hold-soft); }
+  .is-future .part-num { color: var(--future); border-color: rgba(34,211,197,0.2); background: var(--future-soft); }
+
+
+  .card-title-group { flex: 1; }
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .card-meta-row { display: flex; align-items: center; gap: 12px; margin-top: 5px; flex-wrap: wrap; }
+  .app-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid rgba(79,124,255,0.15);
+    padding: 2px 7px;
+    border-radius: 4px;
+  }
+
+  .is-hold .app-tag { color: var(--hold); background: var(--hold-soft); border-color: rgba(245,166,35,0.15); }
+  .is-future .app-tag { color: var(--future); background: var(--future-soft); border-color: rgba(34,211,197,0.15); }
+
+
+  .chevron { margin-left: auto; color: var(--text-dim); font-size: 16px; transition: transform 0.25s ease; align-self: center; }
+  .part-card.open .chevron { transform: rotate(180deg); }
+
+  /* ─── CARD BODY ───────────────────────────── */
+  .card-body { display: none; padding: 0; }
+  .part-card.open .card-body { display: grid; grid-template-columns: 1fr 1fr; }
+  .card-section { padding: 24px; border-right: 1px solid var(--border); }
+  .card-section:last-child { border-right: none; }
+
+  .is-hold .card-section { border-color: rgba(245,166,35,0.1); }
+  .is-future .card-section { border-color: rgba(34,211,197,0.1); }
+
+  .cs-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 1.8px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cs-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .scope-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .scope-list li { display: flex; align-items: flex-start; gap: 8px; color: var(--text-muted); font-size: 13px; line-height: 1.5; }
+  .scope-list li::before { content: '›'; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+  
+  .is-hold .scope-list li::before { color: var(--hold); }
+  .is-future .scope-list li::before { color: var(--future); }
+
+  .files-list { display: flex; flex-direction: column; gap: 6px; }
+  .file-item { display: flex; align-items: flex-start; gap: 8px; padding: 5px 8px; border-radius: 5px; transition: background 0.12s; }
+  .file-item:hover { background: var(--surface-2); }
+  .file-path { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--text-muted); word-break: break-all; line-height: 1.6; }
+  .file-path .file-comment { color: var(--text-dim); font-size: 11px; }
+
+  .file-action { font-family: 'JetBrains Mono', monospace; font-size: 9px; padding: 2px 5px; border-radius: 3px; flex-shrink: 0; margin-top: 2px; }
+  .fa-create { background: rgba(62,207,142,0.1); color: #3ecf8e; border: 1px solid rgba(62,207,142,0.2); }
+  .fa-modify { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(79,124,255,0.2); }
+  .fa-delete { background: rgba(255,82,82,0.08); color: #ff5252; border: 1px solid rgba(255,82,82,0.2); }
+  .fa-freeze { background: var(--hold-soft); color: var(--hold); border: 1px solid rgba(245,166,35,0.2); }
+
+  .file-group-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; margin-top: 12px; margin-bottom: 6px; padding-left: 8px; }
+
+  .hold-banner {
+    margin: 0;
+    padding: 12px 24px;
+    background: var(--hold-glow);
+    border-top: 1px solid rgba(245,166,35,0.1);
+    font-size: 12px;
+    color: var(--hold);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .future-banner {
+    margin: 0;
+    padding: 12px 24px;
+    background: var(--future-soft);
+    border-top: 1px solid rgba(34,211,197,0.1);
+    font-size: 12px;
+    color: var(--future);
+    font-family: 'JetBrains Mono', monospace;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ─── RESPONSIVE ──────────────────────────── */
+  #menu-toggle { display: none; position: fixed; top: 16px; right: 16px; z-index: 200; background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 240px; }
+    .part-card.open .card-body { grid-template-columns: 1fr; }
+    .card-section { border-right: none; border-bottom: 1px solid var(--border); }
+    .card-section:last-child { border-bottom: none; }
+  }
+  @media (max-width: 680px) {
+    #sidebar { transform: translateX(-100%); }
+    #sidebar.open { transform: translateX(0); }
+    #main { margin-left: 0; max-width: 100vw; }
+    #menu-toggle { display: block; }
+  }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<button id="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+
+<nav id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-logo">ERS <span>//</span> Backend</div>
+    <div class="sidebar-sub">Django · Task Breakdown</div>
+  </div>
+
+  <div class="sidebar-section">Overview</div>
+  <a class="nav-item" href="#overview" onclick="closeMenu()"><span class="nav-num">—</span> Summary Table</a>
+
+  <div class="sidebar-section">Dev A (Identity/Admin)</div>
+  <a class="nav-item" href="#part-1" onclick="openCard('part-1');closeMenu()"><span class="nav-num">01</span> Auth & Session</a>
+  <a class="nav-item" href="#part-2" onclick="openCard('part-2');closeMenu()"><span class="nav-num">02</span> User Management</a>
+  <a class="nav-item" href="#part-3" onclick="openCard('part-3');closeMenu()"><span class="nav-num">03</span> Departments</a>
+  <a class="nav-item" href="#part-4" onclick="openCard('part-4');closeMenu()"><span class="nav-num">04</span> Employee Records</a>
+  <a class="nav-item" href="#part-12" onclick="openCard('part-12');closeMenu()"><span class="nav-num">12</span> Audit Trails</a>
+  <a class="nav-item" href="#part-13" onclick="openCard('part-13');closeMenu()"><span class="nav-num">13</span> Security & Data Mgmt</a>
+
+  <div class="sidebar-section">Dev B (Operations)</div>
+  <a class="nav-item" href="#part-6" onclick="openCard('part-6');closeMenu()"><span class="nav-num">06</span> Attendance</a>
+  <a class="nav-item" href="#part-7" onclick="openCard('part-7');closeMenu()"><span class="nav-num">07</span> Leave Management</a>
+  <a class="nav-item" href="#part-14" onclick="openCard('part-14');closeMenu()"><span class="nav-num">14</span> Employment History</a>
+  <a class="nav-item" href="#part-17" onclick="openCard('part-17');closeMenu()"><span class="nav-num">17</span> School Director (SD)</a>
+
+  <div class="sidebar-section">Dev C (Analytics)</div>
+  <a class="nav-item" href="#part-5" onclick="openCard('part-5');closeMenu()"><span class="nav-num">05</span> Documents</a>
+  <a class="nav-item" href="#part-8" onclick="openCard('part-8');closeMenu()"><span class="nav-num">08</span> Applications</a>
+  <a class="nav-item" href="#part-9" onclick="openCard('part-9');closeMenu()"><span class="nav-num">09</span> Notifications</a>
+  <a class="nav-item" href="#part-10" onclick="openCard('part-10');closeMenu()"><span class="nav-num">10</span> Dashboards</a>
+  <a class="nav-item" href="#part-11" onclick="openCard('part-11');closeMenu()"><span class="nav-num">11</span> Reports & Analytics</a>
+
+  <div class="sidebar-section">On Hold / Future</div>
+  <a class="nav-item future" href="#part-15" onclick="openCard('part-15');closeMenu()">
+    <span class="nav-num">15</span> Performance Eval
+    <span class="nav-badge badge-future">FUTURE</span>
+  </a>
+  <a class="nav-item hold" href="#part-16" onclick="openCard('part-16');closeMenu()">
+    <span class="nav-num">16</span> Training Mgmt
+    <span class="nav-badge badge-hold">ON HOLD</span>
+  </a>
+</nav>
+
+<div id="main">
+  <div class="page-header">
+    <div class="page-title">Employee Record System <span>—</span> Backend Tasks</div>
+    <div class="page-meta">
+      <div class="meta-pill"><span class="meta-dot dot-a"></span> 6 Tasks (Dev A)</div>
+      <div class="meta-pill"><span class="meta-dot dot-b"></span> 4 Tasks (Dev B)</div>
+      <div class="meta-pill"><span class="meta-dot dot-c"></span> 5 Tasks (Dev C)</div>
+      <div class="meta-pill"><span class="meta-dot dot-hold"></span> On Hold / Future</div>
+      <div class="meta-pill" style="margin-left:auto;">Django · Python · MySQL</div>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="overview">
+      <div class="section-label">// task distribution</div>
+      <table class="overview-table">
+        <thead>
+          <tr><th>#</th><th>Part</th><th>Primary App</th><th>Assigned To</th></tr>
+        </thead>
+        <tbody>
+          <tr onclick="jumpTo('part-1')"><td>01</td><td>Authentication &amp; Session Management</td><td>accounts/</td><td><span class="status-pill sp-dev-a">Dev A</span></td></tr>
+          <tr onclick="jumpTo('part-2')"><td>02</td><td>User Account Management (Admin)</td><td>accounts/</td><td><span class="status-pill sp-dev-a">Dev A</span></td></tr>
+          <tr onclick="jumpTo('part-3')"><td>03</td><td>Department Management</td><td>accounts/</td><td><span class="status-pill sp-dev-a">Dev A</span></td></tr>
+          <tr onclick="jumpTo('part-4')"><td>04</td><td>Employee Records (HR Core)</td><td>accounts/</td><td><span class="status-pill sp-dev-a">Dev A</span></td></tr>
+          <tr onclick="jumpTo('part-5')"><td>05</td><td>Documents Management</td><td>documents/</td><td><span class="status-pill sp-dev-c">Dev C</span></td></tr>
+          <tr onclick="jumpTo('part-6')"><td>06</td><td>Attendance Monitoring</td><td>attendance/</td><td><span class="status-pill sp-dev-b">Dev B</span></td></tr>
+          <tr onclick="jumpTo('part-7')"><td>07</td><td>Leave Management</td><td>leaves/</td><td><span class="status-pill sp-dev-b">Dev B</span></td></tr>
+          <tr onclick="jumpTo('part-8')"><td>08</td><td>Applications Management</td><td>applications/</td><td><span class="status-pill sp-dev-c">Dev C</span></td></tr>
+          <tr onclick="jumpTo('part-9')"><td>09</td><td>Notifications</td><td>notifications/</td><td><span class="status-pill sp-dev-c">Dev C</span></td></tr>
+          <tr onclick="jumpTo('part-10')"><td>10</td><td>Dashboards (Per Role)</td><td>all apps</td><td><span class="status-pill sp-dev-c">Dev C</span></td></tr>
+          <tr onclick="jumpTo('part-11')"><td>11</td><td>Reports &amp; Analytics</td><td>utils/</td><td><span class="status-pill sp-dev-c">Dev C</span></td></tr>
+          <tr onclick="jumpTo('part-12')"><td>12</td><td>Audit Trails</td><td>audit/</td><td><span class="status-pill sp-dev-a">Dev A</span></td></tr>
+          <tr onclick="jumpTo('part-13')"><td>13</td><td>Admin Security &amp; Data Management</td><td>accounts/</td><td><span class="status-pill sp-dev-a">Dev A</span></td></tr>
+          <tr onclick="jumpTo('part-14')"><td>14</td><td>Employment History</td><td>history/</td><td><span class="status-pill sp-dev-b">Dev B</span></td></tr>
+          <tr onclick="jumpTo('part-15')"><td>15</td><td>Performance Evaluation</td><td>evaluations/</td><td><span class="status-pill sp-future">◈ Future Phase</span></td></tr>
+          <tr onclick="jumpTo('part-16')"><td>16</td><td>Training Management</td><td>templates only</td><td><span class="status-pill sp-hold">⏸ On Hold</span></td></tr>
+          <tr onclick="jumpTo('part-17')"><td>17</td><td>School Director (SD) Module</td><td>across apps</td><td><span class="status-pill sp-dev-b">Dev B</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="parts-grid">
+      <div class="part-card" id="part-1">
+        <div class="card-header" onclick="toggleCard('part-1')">
+          <span class="part-num">PART 01</span>
+          <div class="card-title-group">
+            <div class="card-title">Authentication &amp; Session Management <span class="status-pill sp-dev-a" style="margin-left:8px;font-size:10px;">Dev A</span></div>
+            <div class="card-meta-row">
+              <span class="app-tag">accounts/</span>
+            </div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Login view with credential validation against CustomUser model</li>
+              <li>First-login flag check — redirect to force password change before dashboard</li>
+              <li>System blocks dashboard access until password is changed</li>
+              <li>Role-based dashboard redirect after successful login (HR → hr_dash, Employee → emp_dash, etc.)</li>
+              <li>Session timeout enforcement (duration set in Admin security settings)</li>
+              <li>Forgot / reset password flow</li>
+              <li>Logout and session flush</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-group-label">Models</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/models.py <span class="file-comment">← CustomUser, first_login flag, role field</span></span></div>
+              <div class="file-group-label">Logic</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/views.py <span class="file-comment">← login_view, change_password_view, logout_view, forgot_password_view</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/forms.py <span class="file-comment">← LoginForm, ChangePasswordForm, ForgotPasswordForm</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/signals.py <span class="file-comment">← post-save: set first_login=True on account creation</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/urls.py</span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/login/login.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/login/changepass.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/login/forpass.html</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-2">
+        <div class="card-header" onclick="toggleCard('part-2')">
+          <span class="part-num">PART 02</span>
+          <div class="card-title-group">
+            <div class="card-title">User Account Management <span style="font-weight:400;color:var(--text-muted);font-size:13px;margin-left:4px;">(Admin)</span> <span class="status-pill sp-dev-a" style="margin-left:8px;font-size:10px;">Dev A</span></div>
+            <div class="card-meta-row"><span class="app-tag">accounts/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Create user accounts linked to existing employee records</li>
+              <li>Assign roles: HR, Head, Employee, Admin</li>
+              <li>Set temporary password; enforce first-login password change on creation</li>
+              <li>Activate / Deactivate / Lock accounts</li>
+              <li>Lock account after configured number of failed login attempts</li>
+              <li>Admin-triggered password reset</li>
+              <li>User list with search &amp; filter by role, department, account status</li>
+              <li>View account creation date and basic account info</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/models.py <span class="file-comment">← account status choices, role, employee FK, failed_attempts counter</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/views.py <span class="file-comment">← user_list, create_user, edit_user, deactivate_user, reset_password</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/forms.py <span class="file-comment">← CreateUserForm, AssignRoleForm, AccountStatusForm</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/urls.py</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/admin/user_management.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">static/js/admin/user_management.js</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-3">
+        <div class="card-header" onclick="toggleCard('part-3')">
+          <span class="part-num">PART 03</span>
+          <div class="card-title-group">
+            <div class="card-title">Department Management <span class="status-pill sp-dev-a" style="margin-left:8px;font-size:10px;">Dev A</span></div>
+            <div class="card-meta-row"><span class="app-tag">accounts/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>List all departments with assigned head and employee count</li>
+              <li>Add department: name, college (if applicable)</li>
+              <li>Edit department: rename, reassign head</li>
+              <li>No hard delete — deactivate only (preserve data integrity)</li>
+              <li>Department model should be reusable as FK across other apps (leaves, attendance, etc.)</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/models.py <span class="file-comment">← Department model: name, college, head FK, is_active</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/views.py <span class="file-comment">← department_list, add_department, edit_department, deactivate_department</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/forms.py <span class="file-comment">← DepartmentForm</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/urls.py</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/admin/department_management.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">static/js/admin/department_management.js</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-4">
+        <div class="card-header" onclick="toggleCard('part-4')">
+          <span class="part-num">PART 04</span>
+          <div class="card-title-group">
+            <div class="card-title">Employee Records <span style="font-weight:400;color:var(--text-muted);font-size:13px;margin-left:4px;">(HR Core)</span> <span class="status-pill sp-dev-a" style="margin-left:8px;font-size:10px;">Dev A</span></div>
+            <div class="card-meta-row"><span class="app-tag">accounts/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Employee list with search &amp; filter by department, status, employment type</li>
+              <li>Add employee: create profile and link to user account</li>
+              <li>Edit employee profile (HR access)</li>
+              <li>Deactivate employee (no hard delete)</li>
+              <li>Employee profile page sections: Basic Info, Personal Info, Employment Details, Emergency Contact, System Info</li>
+              <li>Each role (HR, Employee, Head) sees appropriate view of profile (read-only vs editable fields)</li>
+              <li>Profile picture upload and display</li>
+              <li>Editable fields for employee self-service: email, contact, address</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/models.py <span class="file-comment">← EmployeeProfile: all profile sections, FK to Department &amp; User</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/views.py <span class="file-comment">← employee_list, add_employee, employee_profile, edit_employee, deactivate_employee</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/forms.py <span class="file-comment">← AddEmployeeForm, EditEmployeeForm (HR), SelfEditForm (Employee)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/urls.py</span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/hr/employee_management/hr_employeelist.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/hr/employee_management/hr_addemployee.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_profile_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_profile_edit.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_profile_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_profile_edit.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_profile_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_profile_edit.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">media/profile_pics/ <span class="file-comment">← upload path</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-5">
+        <div class="card-header" onclick="toggleCard('part-5')">
+          <span class="part-num">PART 05</span>
+          <div class="card-title-group">
+            <div class="card-title">Documents Management <span class="status-pill sp-dev-c" style="margin-left:8px;font-size:10px;">Dev C</span></div>
+            <div class="card-meta-row"><span class="app-tag">documents/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Upload documents per employee: contract, transcript, certifications, other</li>
+              <li>File list view: name, upload date, type, view/download actions</li>
+              <li>Expiry date field with visual indicator when approaching/expired</li>
+              <li>HR: full upload, manage, delete access</li>
+              <li>Employee &amp; Head: view/download only</li>
+              <li>HR-configurable permission to allow employee self-upload</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">documents/models.py <span class="file-comment">← Document: employee FK, file, type, upload_date, expiry_date, uploaded_by</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">documents/views.py <span class="file-comment">← upload_document, view_document, download_document, delete_document</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">documents/forms.py <span class="file-comment">← DocumentUploadForm</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">documents/urls.py</span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_documents_employee.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_documents_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_documents_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">media/documents/ <span class="file-comment">← storage path</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-6">
+        <div class="card-header" onclick="toggleCard('part-6')">
+          <span class="part-num">PART 06</span>
+          <div class="card-title-group">
+            <div class="card-title">Attendance Monitoring <span class="status-pill sp-dev-b" style="margin-left:8px;font-size:10px;">Dev B</span></div>
+            <div class="card-meta-row"><span class="app-tag">attendance/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Daily attendance log per employee: date, time-in, time-out, status (present/absent/late/undertime)</li>
+              <li>HR: view all employees, edit/correct existing logs</li>
+              <li>Employee: view own logs only, no editing</li>
+              <li>Head: view department logs only, no editing</li>
+              <li>SD: view institution-wide summaries, no editing</li>
+              <li>Aggregated summaries: present count, absent count, late/undertime count (monthly/yearly)</li>
+              <li>Filter by employee, date range, department</li>
+              <li>Attendance reports export (PDF/Excel) — defers to Part 11</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">attendance/models.py <span class="file-comment">← AttendanceLog: employee FK, date, time_in, time_out, status, edited_by</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">attendance/views.py <span class="file-comment">← hr_attendance, emp_attendance, head_attendance, sd_attendance, edit_log</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">attendance/forms.py <span class="file-comment">← AttendanceEditForm (HR correction only)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">attendance/urls.py</span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/attendance/hr_attendance.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/attendance/emp_attendance.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/attendance/head_attendance.html</span></div>
+              <div class="file-item"><span class="file-action fa-create">CREATE</span><span class="file-path">templates/attendance/sd_attendance.html</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-7">
+        <div class="card-header" onclick="toggleCard('part-7')">
+          <span class="part-num">PART 07</span>
+          <div class="card-title-group">
+            <div class="card-title">Leave Management <span class="status-pill sp-dev-b" style="margin-left:8px;font-size:10px;">Dev B</span></div>
+            <div class="card-meta-row"><span class="app-tag">leaves/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Employee: apply for leave — type, date range, reason, optional attachment</li>
+              <li>Employee: view leave status (pending/approved/rejected), leave history, leave balances per type</li>
+              <li>Head: first-level approval/rejection with remarks, forward to HR</li>
+              <li>HR: final approval/rejection</li>
+              <li>Leave balance tracking per type (sick, vacation, maternity, etc.) with auto-deduction on approval</li>
+              <li>Approval flow: Employee submits → Head reviews → HR final decision</li>
+              <li>Notification trigger on each status change (ties to Part 9)</li>
+              <li>SD: view-only leave summary institution-wide</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">leaves/models.py <span class="file-comment">← LeaveRequest, LeaveBalance, LeaveType models</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">leaves/views.py <span class="file-comment">← apply_leave, head_approve, hr_final_approve, leave_history, leave_balance</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">leaves/forms.py <span class="file-comment">← LeaveRequestForm, LeaveActionForm (remarks + decision)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">leaves/signals.py <span class="file-comment">← on approval: deduct LeaveBalance, fire notification</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">leaves/urls.py</span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/emp_leaveselect.html + emp_leaverequest.html + emp_applicationleave.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/head_leaveselect.html + head_leaverequest.html + head_applicationleave.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/hr_leaveselect.html + hr_leaverequest.html + hr_applicationleave.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">media/leave_attachments/ <span class="file-comment">← upload path</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-8">
+        <div class="card-header" onclick="toggleCard('part-8')">
+          <span class="part-num">PART 08</span>
+          <div class="card-title-group">
+            <div class="card-title">Applications Management <span class="status-pill sp-dev-c" style="margin-left:8px;font-size:10px;">Dev C</span></div>
+            <div class="card-meta-row"><span class="app-tag">applications/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Two application types: New Employee Application and Position Change Request</li>
+              <li>Application detail view: applicant info, target position/dept, uploaded documents, full status history</li>
+              <li>Head: review applications for their department — approve/reject/forward with remarks</li>
+              <li>HR: final review and action on all applications</li>
+              <li>ApplicationStatusHistory model to track every state transition with timestamps and actor</li>
+              <li>SD: view-only application pipeline across institution</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">applications/models.py <span class="file-comment">← Application, ApplicationStatusHistory models</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">applications/views.py <span class="file-comment">← application_list, application_detail, approve_application, reject_application</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">applications/forms.py <span class="file-comment">← ApplicationActionForm (remarks + decision)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">applications/urls.py</span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/application_management/hr_appmanagement.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/application_management/head_appmanagement.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/application_management/sd_appmanagement.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/application/application_info.html</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-9">
+        <div class="card-header" onclick="toggleCard('part-9')">
+          <span class="part-num">PART 09</span>
+          <div class="card-title-group">
+            <div class="card-title">Notifications <span class="status-pill sp-dev-c" style="margin-left:8px;font-size:10px;">Dev C</span></div>
+            <div class="card-meta-row"><span class="app-tag">notifications/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>In-system notifications stored per user</li>
+              <li>Notification types: leave status update, pending approval, evaluation reminder, system announcement</li>
+              <li>Mark single notification as read</li>
+              <li>Mark all as read</li>
+              <li>Unread badge count on navbar</li>
+              <li>Per-type toggle (on/off) stored in user profile settings</li>
+              <li>Notification dispatch utility function callable from other apps (leaves, applications, evaluations)</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">notifications/models.py <span class="file-comment">← Notification: user FK, message, type, is_read, created_at</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">notifications/views.py <span class="file-comment">← notification_list, mark_read, mark_all_read, unread_count (JSON endpoint)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">notifications/urls.py</span></div>
+              <div class="file-item"><span class="file-action fa-create">CREATE</span><span class="file-path">notifications/utils.py <span class="file-comment">← send_notification() helper used by leaves, applications, evaluations</span></span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/components/notification_list.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/components/navbar.html <span class="file-comment">← unread badge</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-10">
+        <div class="card-header" onclick="toggleCard('part-10')">
+          <span class="part-num">PART 10</span>
+          <div class="card-title-group">
+            <div class="card-title">Dashboards <span style="font-weight:400;color:var(--text-muted);font-size:13px;margin-left:4px;">(Per Role)</span> <span class="status-pill sp-dev-c" style="margin-left:8px;font-size:10px;">Dev C</span></div>
+            <div class="card-meta-row"><span class="app-tag">all apps</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li><strong style="color:var(--text)">HR:</strong> welcome widget, quick actions (add employee / approve leave / generate report), pending notifications, summary cards (total/active employees, on leave today), attendance pie chart</li>
+              <li><strong style="color:var(--text)">Employee:</strong> attendance summary (current month), recent leave requests with status, notifications</li>
+              <li><strong style="color:var(--text)">Head:</strong> dept overview (total/active employees), aggregated attendance chart, pending leave approvals, evaluation reminders</li>
+              <li><strong style="color:var(--text)">Admin:</strong> system overview (users, departments, active sessions), user account summary, recent login activity, failed login count, system notifications</li>
+              <li><strong style="color:var(--text)">SD:</strong> institution-wide summaries, HR announcements, attendance and leave overview</li>
+              <li>Rotational inspirational quote component (shared across roles)</li>
+              <li>Help &amp; Support section per dashboard (FAQ, HR/ITS contact)</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-group-label">Dashboard Views — each pulls aggregated data from relevant apps</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/dashboards/hr_dash.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/dashboards/emp_dash.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/dashboards/head_dash.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/dashboards/admin_dash.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/dashboards/sd_dash.html</span></div>
+              <div class="file-group-label">JS / Charts</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">static/js/dashboard/ <span class="file-comment">← all role dashboard JS files</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">static/js/charts.js <span class="file-comment">← shared chart rendering logic</span></span></div>
+              <div class="file-group-label">Context</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">utils/context_processors.py <span class="file-comment">← inject unread notifications, user role, etc.</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-11">
+        <div class="card-header" onclick="toggleCard('part-11')">
+          <span class="part-num">PART 11</span>
+          <div class="card-title-group">
+            <div class="card-title">Reports &amp; Analytics <span class="status-pill sp-dev-c" style="margin-left:8px;font-size:10px;">Dev C</span></div>
+            <div class="card-meta-row"><span class="app-tag">utils/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>HR reports: Employee List, Attendance Report, Leave Report, Evaluation Summary</li>
+              <li>Custom report generator: filter by date range, department, employment status</li>
+              <li>Export to PDF (WeasyPrint or ReportLab) and Excel (openpyxl)</li>
+              <li>Head: department-scoped attendance report only, export supported</li>
+              <li>SD: institution-wide read-only report views</li>
+              <li>Report template for PDF output</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">utils/pdf_generator.py <span class="file-comment">← generate_pdf(report_type, queryset, filters)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">utils/excel_generator.py <span class="file-comment">← generate_excel(report_type, queryset, filters)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/reports/reports.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/pdf/report_template.html <span class="file-comment">← PDF layout base</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">static/js/reports/reports.js</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">static/css/reports/reports.css</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-12">
+        <div class="card-header" onclick="toggleCard('part-12')">
+          <span class="part-num">PART 12</span>
+          <div class="card-title-group">
+            <div class="card-title">Audit Trails <span class="status-pill sp-dev-a" style="margin-left:8px;font-size:10px;">Dev A</span></div>
+            <div class="card-meta-row"><span class="app-tag">audit/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Login logs: user, datetime, IP address, success/failure status</li>
+              <li>Activity logs: data changes, leave approvals, role changes, account activation/deactivation</li>
+              <li>Middleware captures login events and key request actions automatically</li>
+              <li>Admin view: searchable and filterable log tables</li>
+              <li>Accessible only by Admin role</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">audit/models.py <span class="file-comment">← LoginLog, ActivityLog: user FK, action, timestamp, ip_address, details</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">audit/middleware.py <span class="file-comment">← capture login events, attach to request lifecycle</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">audit/views.py <span class="file-comment">← audit_trails (login logs + activity logs, filterable)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">audit/urls.py</span></div>
+              <div class="file-item"><span class="file-action fa-create">CREATE</span><span class="file-path">audit/utils.py <span class="file-comment">← log_activity() helper called by other apps on key actions</span></span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/admin/audit_trails.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">static/js/admin/audit_trails.js</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-13">
+        <div class="card-header" onclick="toggleCard('part-13')">
+          <span class="part-num">PART 13</span>
+          <div class="card-title-group">
+            <div class="card-title">Admin Security &amp; Data Management <span class="status-pill sp-dev-a" style="margin-left:8px;font-size:10px;">Dev A</span></div>
+            <div class="card-meta-row"><span class="app-tag">accounts/</span><span class="app-tag">audit/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Password policy configuration: minimum length, complexity requirements</li>
+              <li>Session timeout duration setting</li>
+              <li>First-login password change enforcement toggle</li>
+              <li>Manual backup trigger and scheduled backup status display</li>
+              <li>Data export: user list, system logs, department structure (Excel)</li>
+              <li>Restore from snapshot (display only / admin-initiated)</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/models.py <span class="file-comment">← SystemConfig model: password rules, session timeout (singleton)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/views.py <span class="file-comment">← security_settings_view, data_export_view, backup_trigger_view</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/forms.py <span class="file-comment">← SecuritySettingsForm</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">utils/excel_generator.py <span class="file-comment">← reuse for data exports</span></span></div>
+              <div class="file-item"><span class="file-action fa-create">CREATE</span><span class="file-path">templates/admin/security_settings.html</span></div>
+              <div class="file-item"><span class="file-action fa-create">CREATE</span><span class="file-path">templates/admin/data_management.html</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-14">
+        <div class="card-header" onclick="toggleCard('part-14')">
+          <span class="part-num">PART 14</span>
+          <div class="card-title-group">
+            <div class="card-title">Employment History <span class="status-pill sp-dev-b" style="margin-left:8px;font-size:10px;">Dev B</span></div>
+            <div class="card-meta-row"><span class="app-tag">history/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Track every significant employment change: role change, department transfer, status change, promotion</li>
+              <li>Each history entry: employee, change type, from-value, to-value, date, recorded by</li>
+              <li>Timeline view displayed within employee profile (read-only for all roles)</li>
+              <li>log_history() service function called by accounts app whenever employment data changes</li>
+              <li>HR, Head, and Employee each see the timeline from within their respective profile views</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">history/models.py <span class="file-comment">← EmploymentHistory: employee FK, change_type, from_value, to_value, date, recorded_by</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">history/services.py <span class="file-comment">← log_history() called by accounts/views.py on profile edits</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">history/views.py <span class="file-comment">← employee_timeline (role-guarded)</span></span></div>
+              <div class="file-group-label">Templates</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/history/timeline.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_employment-history_employee.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_employment-history_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_employment-history_view.html</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card" id="part-17">
+        <div class="card-header" onclick="toggleCard('part-17')">
+          <span class="part-num">PART 17</span>
+          <div class="card-title-group">
+            <div class="card-title">School Director (SD) Module <span class="status-pill sp-dev-b" style="margin-left:8px;font-size:10px;">Dev B</span></div>
+            <div class="card-meta-row"><span class="app-tag">across apps</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>SD is a read-only elevated role — no editing, no approvals except leave forwarding</li>
+              <li>Dashboard: institution-wide attendance/leave summary, HR announcements, department overview</li>
+              <li>Attendance: view all departments, aggregated charts, export — no log editing</li>
+              <li>Leave: view all leave requests institution-wide — no approval action</li>
+              <li>Applications: view pipeline across all departments — no action</li>
+              <li>Profile: same self-service as Employee role (edit contact/address, change password)</li>
+              <li>All SD views already have template files — backend views and role guards needed</li>
+              <li>Add SD to role-based decorator/permission checks across all relevant apps</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files</div>
+            <div class="files-list">
+              <div class="file-group-label">Existing Templates — need backend wiring</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/dashboards/sd_dash.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/application_management/sd_appmanagement.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/sd_leaveselect.html + sd_leaverequest.html + sd_applicationleave.html</span></div>
+              <div class="file-group-label">Role Guards</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">utils/decorators.py <span class="file-comment">← add SD to role_required decorators across views</span></span></div>
+              <div class="file-group-label">View Additions</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">attendance/views.py <span class="file-comment">← add sd_attendance view</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">leaves/views.py <span class="file-comment">← add sd_leave_overview view</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">applications/views.py <span class="file-comment">← add sd_application_overview view</span></span></div>
+              <div class="file-item"><span class="file-action fa-create">CREATE</span><span class="file-path">templates/attendance/sd_attendance.html <span class="file-comment">← not yet in file structure</span></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="part-card is-future" id="part-15">
+        <div class="card-header" onclick="toggleCard('part-15')">
+          <span class="part-num">PART 15</span>
+          <div class="card-title-group">
+            <div class="card-title">Performance Evaluation <span class="status-pill sp-future" style="margin-left:8px;font-size:10px;">◈ Future Phase</span></div>
+            <div class="card-meta-row"><span class="app-tag">evaluations/</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Scope / To-Do</div>
+            <ul class="scope-list">
+              <li>Create and assign evaluation forms to employees</li>
+              <li>Head submits ratings and comments per employee</li>
+              <li>Record evaluation results with date, evaluator, overall rating</li>
+              <li>Evaluation history per employee (visible in employee profile)</li>
+              <li>Student evaluation results: anonymous aggregated charts visible inside employee profile</li>
+              <li>Management command: import_grades.py for bulk student evaluation import</li>
+              <li>Monitor evaluation progress: completed vs pending</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files — Do Not Touch Yet</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-freeze">FREEZE</span><span class="file-path">evaluations/models.py</span></div>
+              <div class="file-item"><span class="file-action fa-freeze">FREEZE</span><span class="file-path">evaluations/views.py</span></div>
+              <div class="file-item"><span class="file-action fa-freeze">FREEZE</span><span class="file-path">evaluations/urls.py</span></div>
+              <div class="file-item"><span class="file-action fa-freeze">FREEZE</span><span class="file-path">evaluations/management/commands/import_grades.py</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="future-banner">◈ &nbsp; Future Phase — do not begin until core modules are complete and signed off.</div>
+      </div>
+
+      <div class="part-card is-hold" id="part-16">
+        <div class="card-header" onclick="toggleCard('part-16')">
+          <span class="part-num">PART 16</span>
+          <div class="card-title-group">
+            <div class="card-title">Training Management <span class="status-pill sp-hold" style="margin-left:8px;font-size:10px;">⏸ On Hold</span></div>
+            <div class="card-meta-row"><span class="app-tag">templates only</span></div>
+          </div>
+          <span class="chevron">⌄</span>
+        </div>
+        <div class="card-body">
+          <div class="card-section">
+            <div class="cs-label">Notes</div>
+            <ul class="scope-list">
+              <li>No blueprint specification exists for this module — scope is undefined</li>
+              <li>Template files for HR and Employee views exist in the file structure but have no corresponding models, views, or URLs</li>
+              <li>Backburner — do not build until scope is formally defined and approved</li>
+              <li>Possible future scope: training records, certification tracking, seminar attendance logs</li>
+            </ul>
+          </div>
+          <div class="card-section">
+            <div class="cs-label">Files — Frozen</div>
+            <div class="files-list">
+              <div class="file-item"><span class="file-action fa-freeze">FREEZE</span><span class="file-path">templates/training_management/emp_training.html</span></div>
+              <div class="file-item"><span class="file-action fa-freeze">FREEZE</span><span class="file-path">templates/training_management/hr_training.html</span></div>
+              <div class="file-item"><span class="file-action fa-freeze">FREEZE</span><span class="file-path">static/css/training_management/</span></div>
+              <div class="file-item"><span class="file-action fa-freeze">FREEZE</span><span class="file-path">static/js/training_management/</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="hold-banner">⏸ &nbsp; On Hold — backburner. No backend work until scope is defined.</div>
+      </div>
+
+    </div></div></div><script>
+  function toggleCard(id) {
+    const card = document.getElementById(id);
+    card.classList.toggle('open');
+    // sync sidebar active state
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const link = document.querySelector(`.nav-item[href="#${id}"]`);
+    if (link) link.classList.add('active');
+  }
+
+  function openCard(id) {
+    const card = document.getElementById(id);
+    if (card && !card.classList.contains('open')) {
+      card.classList.add('open');
+    }
+  }
+
+  function jumpTo(id) {
+    openCard(id);
+    setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    const link = document.querySelector(`.nav-item[href="#${id}"]`);
+    if (link) link.classList.add('active');
+  }
+
+  function closeMenu() {
+    document.getElementById('sidebar').classList.remove('open');
+  }
+
+  // highlight sidebar on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        const link = document.querySelector(`.nav-item[href="#${id}"]`);
+        if (link) link.classList.add('active');
+      }
+    });
+  }, { threshold: 0.3, rootMargin: '-80px 0px -60% 0px' });
+
+  document.querySelectorAll('.part-card, #overview').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
