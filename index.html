@@ -580,7 +580,7 @@
             <div class="cs-label">Scope / To-Do</div>
             <ul class="scope-list">
               <li>Create user accounts linked to existing employee records</li>
-              <li>Assign roles: HR, Head, Employee, Admin</li>
+              <li>Assign roles: HR, Head, Employee, Admin, SD</li>
               <li>Set temporary password; enforce first-login password change on creation</li>
               <li>Activate / Deactivate / Lock accounts</li>
               <li>Lock account after configured number of failed login attempts</li>
@@ -655,9 +655,9 @@
               <li>Edit employee profile (HR access)</li>
               <li>Deactivate employee (no hard delete)</li>
               <li>Employee profile page sections: Basic Info, Personal Info, Employment Details, Emergency Contact, System Info</li>
-              <li>Each role (HR, Employee, Head) sees appropriate view of profile (read-only vs editable fields)</li>
               <li>Profile picture upload and display</li>
               <li>Editable fields for employee self-service: email, contact, address</li>
+              <li>Each role (HR, Employee, Head, SD) sees appropriate view of profile and relevant inner-tabs</li>
             </ul>
           </div>
           <div class="card-section">
@@ -665,17 +665,21 @@
             <div class="files-list">
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/models.py <span class="file-comment">← EmployeeProfile: all profile sections, FK to Department &amp; User</span></span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/views.py <span class="file-comment">← employee_list, add_employee, employee_profile, edit_employee, deactivate_employee</span></span></div>
-              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/forms.py <span class="file-comment">← AddEmployeeForm, EditEmployeeForm (HR), SelfEditForm (Employee)</span></span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/forms.py <span class="file-comment">← AddEmployeeForm, EditEmployeeForm (HR), SelfEditForm (Employee/SD)</span></span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">accounts/urls.py</span></div>
               <div class="file-group-label">Templates</div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/hr/employee_management/hr_employeelist.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/hr/employee_management/hr_addemployee.html</span></div>
-              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_profile_view.html</span></div>
-              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_profile_edit.html</span></div>
-              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_profile_view.html</span></div>
-              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_profile_edit.html</span></div>
-              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_profile_view.html</span></div>
-              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_profile_edit.html</span></div>
+              <div class="file-group-label">Profiles</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_profile_view.html + hr_profile_edit.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_profile_view.html + emp_profile_edit.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_profile_view.html + head_profile_edit.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/sd_profile_view.html + sd_profile_edit.html</span></div>
+              <div class="file-group-label">Profile Tabs: Department views</div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_department_employee.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_department_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_department_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/sd_department_view.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">media/profile_pics/ <span class="file-comment">← upload path</span></span></div>
             </div>
           </div>
@@ -699,7 +703,7 @@
               <li>File list view: name, upload date, type, view/download actions</li>
               <li>Expiry date field with visual indicator when approaching/expired</li>
               <li>HR: full upload, manage, delete access</li>
-              <li>Employee &amp; Head: view/download only</li>
+              <li>Employee, Head, SD: view/download only (via Profile Tab)</li>
               <li>HR-configurable permission to allow employee self-upload</li>
             </ul>
           </div>
@@ -710,10 +714,11 @@
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">documents/views.py <span class="file-comment">← upload_document, view_document, download_document, delete_document</span></span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">documents/forms.py <span class="file-comment">← DocumentUploadForm</span></span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">documents/urls.py</span></div>
-              <div class="file-group-label">Templates</div>
+              <div class="file-group-label">Templates (Profile Tabs)</div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_documents_employee.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_documents_view.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_documents_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/sd_documents_view.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">media/documents/ <span class="file-comment">← storage path</span></span></div>
             </div>
           </div>
@@ -795,6 +800,7 @@
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/emp_leaveselect.html + emp_leaverequest.html + emp_applicationleave.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/head_leaveselect.html + head_leaverequest.html + head_applicationleave.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/hr_leaveselect.html + hr_leaverequest.html + hr_applicationleave.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/sd_leaveselect.html + sd_leaverequest.html + sd_applicationleave.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">media/leave_attachments/ <span class="file-comment">← upload path</span></span></div>
             </div>
           </div>
@@ -1040,7 +1046,7 @@
               <li>Each history entry: employee, change type, from-value, to-value, date, recorded by</li>
               <li>Timeline view displayed within employee profile (read-only for all roles)</li>
               <li>log_history() service function called by accounts app whenever employment data changes</li>
-              <li>HR, Head, and Employee each see the timeline from within their respective profile views</li>
+              <li>HR, Head, Employee, and SD each see the timeline from within their respective profile views</li>
             </ul>
           </div>
           <div class="card-section">
@@ -1049,11 +1055,12 @@
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">history/models.py <span class="file-comment">← EmploymentHistory: employee FK, change_type, from_value, to_value, date, recorded_by</span></span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">history/services.py <span class="file-comment">← log_history() called by accounts/views.py on profile edits</span></span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">history/views.py <span class="file-comment">← employee_timeline (role-guarded)</span></span></div>
-              <div class="file-group-label">Templates</div>
+              <div class="file-group-label">Templates (Profile Tabs)</div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/history/timeline.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/hr_employment-history_employee.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/emp_employment-history_view.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/head_employment-history_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/sd_employment-history_view.html</span></div>
             </div>
           </div>
         </div>
@@ -1077,8 +1084,7 @@
               <li>Attendance: view all departments, aggregated charts, export — no log editing</li>
               <li>Leave: view all leave requests institution-wide — no approval action</li>
               <li>Applications: view pipeline across all departments — no action</li>
-              <li>Profile: same self-service as Employee role (edit contact/address, change password)</li>
-              <li>All SD views already have template files — backend views and role guards needed</li>
+              <li>Profile: bespoke SD profile view, edit, documents, and department tabs (needs distinct URL routing)</li>
               <li>Add SD to role-based decorator/permission checks across all relevant apps</li>
             </ul>
           </div>
@@ -1089,6 +1095,10 @@
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/dashboards/sd_dash.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/application_management/sd_appmanagement.html</span></div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/leave/sd_leaveselect.html + sd_leaverequest.html + sd_applicationleave.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/sd_profile_view.html + sd_profile_edit.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/sd_documents_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/sd_department_view.html</span></div>
+              <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">templates/accounts/sd_employment-history_view.html</span></div>
               <div class="file-group-label">Role Guards</div>
               <div class="file-item"><span class="file-action fa-modify">MOD</span><span class="file-path">utils/decorators.py <span class="file-comment">← add SD to role_required decorators across views</span></span></div>
               <div class="file-group-label">View Additions</div>
